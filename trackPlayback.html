@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>百度地图api</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="map"></div>
+  <script type="text/javascript" src="http://api.map.baidu.com/api?v=3.0&ak=xGT50xmzdVWslX88pX8apZPMDfKMC8O0">
+  </script>
+  <script>
+    const pathArr = [ {
+      "lat": "34.831103",
+      "lng": "113.565289"
+    }, {
+      "lat": "34.833303",
+      "lng": "113.550581"
+    }, {
+      "lat": "34.833481",
+      "lng": "113.538634"
+    }, {
+      "lat": "34.795103",
+      "lng": "113.537225"
+    }, {
+      "lat": "34.754263",
+      "lng": "113.533147"
+    }, {
+      "lat": "34.741741",
+      "lng": "113.539167"
+    }, {
+      "lat": "34.720785",
+      "lng": "113.542186"
+    }, {
+      "lat": "34.720208",
+      "lng": "113.540752"
+    }, {
+      "lat": "34.729402",
+      "lng": "113.545023"
+    }, {
+      "lat": "34.730109",
+      "lng": "113.544672"
+    }, {
+      "lat": "34.730332",
+      "lng": "113.543938"
+    }, {
+      "lat": "34.729661",
+      "lng": "113.544417"
+    }, {
+      "lat": "34.730087",
+      "lng": "113.544987"
+    }, {
+      "lat": "34.748967",
+      "lng": "113.538977"
+    }, {
+      "lat": "34.810267",
+      "lng": "113.53655"
+    }, {
+      "lat": "34.833643",
+      "lng": "113.542322"
+    }, {
+      "lat": "34.83507",
+      "lng": "113.527697"
+    }, {
+      "lat": "34.842054",
+      "lng": "113.515652"
+    }, {
+      "lat": "34.841758",
+      "lng": "113.515078"
+    }, {
+      "lat": "34.838667",
+      "lng": "113.516809"
+    }, {
+      "lat": "34.833925",
+      "lng": "113.530186"
+    }, {
+      "lat": "34.833663",
+      "lng": "113.539792"
+    }, {
+      "lat": "34.833405",
+      "lng": "113.551783"
+    }, {
+      "lat": "34.832846",
+      "lng": "113.558313"
+    }, {
+      "lat": "34.831017",
+      "lng": "113.564272"
+    }, {
+      "lat": "34.831122",
+      "lng": "113.565444"
+    }, {
+      "lat": "34.831004",
+      "lng": "113.565133"
+    }, {
+      "lat": "34.830874",
+      "lng": "113.565465"
+    }, {
+      "lat": "34.831059",
+      "lng": "113.565315"
+    }, {
+      "lat": "34.830555",
+      "lng": "113.565859"
+    }, {
+      "lat": "34.831079",
+      "lng": "113.565309"
+    }, {
+      "lat": "34.831138",
+      "lng": "113.56542"
+    } ]
+    pathArr.map( v => {
+      v.lat = parseFloat( v.lat )
+      v.lng = parseFloat( v.lng )
+    } )
+    var map, bmap, locationPathArr = [],
+      markerMy, pathIndex = 0,
+      timer
+    initMap()
+
+    function initMap() {
+      bmap = new BMap.Map( 'map' )
+      var top_left_navigation = new BMap.NavigationControl() //左上角，添加默认缩放平移控件
+      var top_left_control = new BMap.ScaleControl( {
+        anchor: BMAP_ANCHOR_TOP_LEFT
+      } ) // 左上角，添加比例尺
+      bmap.addControl( top_left_control )
+      bmap.addControl( top_left_navigation )
+      bmap.centerAndZoom( new BMap.Point( 113.563753, 34.826053 ), 19 ) // 初始化地图,设置中心点坐标和地图级别
+      bmap.enableScrollWheelZoom( true ) // 开启鼠标滚轮缩放
+
+      pathArr.map( ( v, i ) => {
+        if ( i < pathArr.length - 1 ) {
+          const path0 = pathArr[ i ]
+          const path1 = pathArr[ i + 1 ]
+          const pathCenter = jisuanCenter( path0, path1 )
+          locationPathArr.push( path0 )
+          pathCenter.map( item => locationPathArr.push( {
+            lat: item.lat,
+            lng: item.lng
+          } ) )
+        } else if ( i == pathArr.length - 1 ) {
+          locationPathArr.push( pathArr[ i ] )
+        }
+      } )
+      addRoute( locationPathArr )
+    }
+
+    function play() {
+      console.log( 'markerMy:', markerMy )
+      timer = setInterval( () => {
+        if ( pathIndex <= locationPathArr.length - 1 ) {
+          bmap.removeOverlay( markerMy )
+          let p = new BMap.Point( locationPathArr[ pathIndex ].lng, locationPathArr[ pathIndex ].lat )
+          var myIcon = new BMap.Icon( 'http://qiniugong.ma2dai.com/5sVWl7itkH1589789694361.png',
+            new BMap.Size( 48, 48 ) );
+          markerMy = new BMap.Marker( p, {
+            icon: myIcon
+          } )
+
+          bmap.addOverlay( markerMy )
+          pathIndex = pathIndex + 1
+        } else {
+          clearInterval( timer )
+        }
+      }, 50 )
+      console.log( '开始运动...' )
+    }
+
+    function jisuanCenter( start, end ) {
+      var x1 = start.lng
+      var y1 = start.lat
+      var x2 = end.lng
+      var y2 = end.lat
+      var pointIndex = 2
+      var pts = []
+      var chang = 100
+      for ( var i = pointIndex; i < chang; i += pointIndex ) {
+        var x3 = ( i / chang ) * ( x1 - x2 ) + x2
+        var y3 = ( i / chang ) * ( y1 - y2 ) + y2
+        var point = new BMap.Point( x3, y3 )
+        pts.push( point )
+      }
+      return pts.reverse()
+    }
+
+    function addRoute( data ) {
+      var points = [] //点信息数组
+      var landmarkPois = [] //路书需要数组
+      var startTime = ''
+      for ( var i = 0; i < data.length; i++ ) {
+        var p = new BMap.Point( data[ i ].lng, data[ i ].lat )
+        if ( i == 0 ) {
+          //起点
+          addMarker(
+            p, {
+              ...data[ i ],
+              label: '起点'
+            },
+            false
+          )
+          addMarker(
+            p, {
+              ...data[ i ],
+              ins: 'my',
+              icon: {
+                url: 'http://qiniugong.ma2dai.com/5sVWl7itkH1589789694361.png',
+                size: {
+                  width: 48,
+                  height: 48
+                }
+              }
+            },
+            false
+          )
+          bmap.centerAndZoom( p, 14 )
+        } else if ( i == data.length - 1 ) {
+          //止点
+          addMarker( p, {
+            ...data[ i ],
+            label: '终点'
+          }, false )
+        } else if ( i % Math.round( data.length / 10 ) == 0 ) {
+          //其他点
+          // addMarker(p, data[i], false)
+        } else {
+          // addMarker(p, data[i], false)
+          // this.addMarker(p, data[i].UpDateTime, true)
+        }
+        points.push( p )
+      }
+
+      //画线
+      addLine( points )
+      play()
+    }
+    //画线
+    function addLine( points ) {
+      var sy = new BMap.Symbol( BMap_Symbol_SHAPE_BACKWARD_OPEN_ARROW, {
+        scale: 0.6, //图标缩放大小
+        strokeColor: '#fff', //设置矢量图标的线填充颜色
+        strokeWeight: '2' //设置线宽
+      } )
+      var icons = new BMap.IconSequence( sy, '100%', '4%' )
+      var polyline = new BMap.Polyline( points, {
+        enableEditing: false, //是否启用线编辑，默认为false
+        enableClicking: true, //是否响应点击事件，默认为true
+        // icons: [icons],
+        strokeWeight: '8', //折线的宽度，以像素为单位
+        strokeOpacity: 0.8, //折线的透明度，取值范围0 - 1
+        strokeColor: '#18a45b' //折线颜色
+      } )
+      console.log( 'points:', points )
+      bmap.addOverlay( polyline ) //增加折线
+    }
+
+    function addMarker( point, info, bol ) {
+      var x = {}
+      let label
+      if ( info.label ) {
+        label = new BMap.Label( info.label, {
+          offset: new BMap.Size( 20, -10 )
+        } )
+      }
+      if ( info.ins == 'my' ) {
+        var myIcon = new BMap.Icon( info.icon.url, new BMap.Size( info.icon.size.width, info.icon.size.width ) );
+        x.icon = myIcon
+      }
+      var p = new BMap.Point( info.lng, info.lat )
+      if ( info.ins == 'my' ) {
+        markerMy = new BMap.Marker( p, {
+          ...x
+        } )
+        bmap.addOverlay( markerMy )
+      } else {
+        var marker2 = new BMap.Marker( p, {
+          ...x
+        } )
+        bmap.addOverlay( marker2 )
+        if ( info.label ) {
+          marker2.setLabel( label )
+        }
+      }
+    }
+  </script>
+</body>
+
+</html>
